@@ -39,32 +39,32 @@ pub trait SubSecondRound {
 }
 
 impl<T> SubSecondRound for T
-where T: Timelike + Clone + Add<Duration, Output=T> + Sub<Duration, Output=T>
+where T: Timelike + Copy + Add<Duration, Output=T> + Sub<Duration, Output=T>
 {
     fn round_subsecs(&self, digits: u16) -> T {
-        let clone = self.clone();
+        let copy = *self;
         let span = span_for_digits(digits);
-        let delta_down = clone.nanosecond() % span;
+        let delta_down = copy.nanosecond() % span;
         if delta_down > 0 {
             let delta_up = span - delta_down;
             if delta_up <= delta_down {
-                clone + Duration::nanoseconds(delta_up.into())
+                copy + Duration::nanoseconds(delta_up.into())
             } else {
-                clone - Duration::nanoseconds(delta_down.into())
+                copy - Duration::nanoseconds(delta_down.into())
             }
         } else {
-            clone // unchanged
+            copy // unchanged
         }
     }
 
     fn trunc_subsecs(&self, digits: u16) -> T {
-        let clone = self.clone();
+        let copy = *self;
         let span = span_for_digits(digits);
-        let delta_down = clone.nanosecond() % span;
+        let delta_down = copy.nanosecond() % span;
         if delta_down > 0 {
-            clone - Duration::nanoseconds(delta_down.into())
+            copy - Duration::nanoseconds(delta_down.into())
         } else {
-            clone // unchanged
+            copy // unchanged
         }
     }
 }
