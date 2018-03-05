@@ -23,7 +23,7 @@ pub trait SubSecondRound {
     /// assert_eq!(dt.round_subsecs(2).nanosecond(), 150_000_000);
     /// assert_eq!(dt.round_subsecs(1).nanosecond(), 200_000_000);
     /// ```
-    fn round_subsecs(self, digits: u16) -> Self;
+    fn round_subsecs(&self, digits: u16) -> Self;
 
     /// Return a copy truncated to the specified number of subsecond
     /// digits. With 9 or more digits, self is returned unmodified.
@@ -35,34 +35,36 @@ pub trait SubSecondRound {
     /// assert_eq!(dt.trunc_subsecs(2).nanosecond(), 150_000_000);
     /// assert_eq!(dt.trunc_subsecs(1).nanosecond(), 100_000_000);
     /// ```
-    fn trunc_subsecs(self, digits: u16) -> Self;
+    fn trunc_subsecs(&self, digits: u16) -> Self;
 }
 
 impl<T> SubSecondRound for T
-where T: Timelike + Add<Duration, Output=T> + Sub<Duration, Output=T>
+where T: Timelike + Clone + Add<Duration, Output=T> + Sub<Duration, Output=T>
 {
-    fn round_subsecs(self, digits: u16) -> T {
+    fn round_subsecs(&self, digits: u16) -> T {
+        let clone = self.clone();
         let span = span_for_digits(digits);
-        let delta_down = self.nanosecond() % span;
+        let delta_down = clone.nanosecond() % span;
         if delta_down > 0 {
             let delta_up = span - delta_down;
             if delta_up <= delta_down {
-                self + Duration::nanoseconds(delta_up.into())
+                clone + Duration::nanoseconds(delta_up.into())
             } else {
-                self - Duration::nanoseconds(delta_down.into())
+                clone - Duration::nanoseconds(delta_down.into())
             }
         } else {
-            self // unchanged
+            clone // unchanged
         }
     }
 
-    fn trunc_subsecs(self, digits: u16) -> T {
+    fn trunc_subsecs(&self, digits: u16) -> T {
+        let clone = self.clone();
         let span = span_for_digits(digits);
-        let delta_down = self.nanosecond() % span;
+        let delta_down = clone.nanosecond() % span;
         if delta_down > 0 {
-            self - Duration::nanoseconds(delta_down.into())
+            clone - Duration::nanoseconds(delta_down.into())
         } else {
-            self // unchanged
+            clone // unchanged
         }
     }
 }
